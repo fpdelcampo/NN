@@ -26,7 +26,7 @@ class Dense:
             self.bias = self.normal_initialization(output_shape, initialize['left'], initialize['right'])
         else:
             raise ValueError(f"Initialization not understood, initialize params = {initialize} ")
-
+    
     def normal_initialization(self, shape, mu=0, sigma=0.01):
         return np.random.normal(mu, sigma, size=shape)
 
@@ -39,20 +39,83 @@ class Dense:
         self.input = in_data
         return self.activation(self.weights @ in_data + self.bias)
 
-    def backward(self, delta_l=None, weights_l=None, first=False, loss=1): # delta_l_1 = delta_l * d_activation(self.weights @ self.input + self.bias) * weights_l.T      
+    def backward(self, delta_l=None, weights_l=None, first=False, loss=None): # delta_l_1 = delta_l * d_activation(self.weights @ self.input + self.bias) * weights_l.T      
+
+        # Read this article for issues with backward dimensionality. In particular, about how treating the gradient of something like softmax vs sigmoid differs:
+        # https://aew61.github.io/blog/artificial_neural_networks/1_background/1.b_activation_functions_and_derivatives.html
+        
+        self.backward_passes +=1 
+        z = self.weights @ self.input + self.bias
+        d = self.d_activation(z)
+        if first:
+            if loss is None:
+                raise ValueError("Must provide gradient of the loss function with respect to the model's outputs")
+            if d.ndim == 1:
+                delta_l = np.outer(d, loss)
+            else:
+                delta_l = d @ loss
+            self.weights_gradient += self.learning_rate*np.outer(delta_l, self.input)
+            self.bias_gradient += self.learning_rate*delta_l
+            return delta_l, self.weights
+        else:
+            delta_l_1 = d * (weights_l.T @ delta_l)
+            self.weights_gradient += self.learning_rate*np.outer(delta_l_1, self.input)
+            self.bias_gradient += self.learning_rate*delta_l_1
+            return delta_l_1, self.weights
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        """
         z = self.weights @ self.input + self.bias
         self.backward_passes += 1
         if first:
-            return self.d_activation(z)*loss, self.weights
+            delta_l = self.d_activation(z)*loss
+            if delta_l.ndim == 1:
+                product = np.outer(delta_l, self.input)
+            else:
+                product = delta_l @ self.input
+            self.weights_gradient += self.learning_rate*product
+            self.bias_gradient += self.learning_rate*delta_l
+            return delta_l, self.weights
         if delta_l is None or weights_l is None:
             raise ValueError(f"Since first is false, delta_l and weights_l must not be None; instead, received delta_l = {delta_l} and weights_l = {weights_l}")
-        delta_l_1 = self.d_activation(z) * (weights_l @ delta_l)
+        delta_l_1 = self.d_activation(z) * (weights_l.T  @ delta_l)
         tmp_weights = self.weights
         self.weights_gradient += self.learning_rate*np.outer(delta_l_1, self.input)
         self.bias_gradient += self.learning_rate*delta_l_1
+        #print(self.weights_gradient)
         return delta_l_1, tmp_weights
+        """
 
     def update(self):
+        print('called')
         self.weights -= self.weights_gradient/self.backward_passes
         self.bias -= self.bias_gradient/self.backward_passes
         self.weights_gradient = np.zeros(self.output_shape+self.input_shape)
