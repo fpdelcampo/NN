@@ -43,7 +43,8 @@ class Dense:
 
         # Read this article for issues with backward dimensionality. In particular, about how treating the gradient of something like softmax vs sigmoid differs:
         # https://aew61.github.io/blog/artificial_neural_networks/1_background/1.b_activation_functions_and_derivatives.html
-        
+        # http://cs231n.stanford.edu/slides/2018/cs231n_2018_ds02.pdf
+
         self.backward_passes +=1 
         z = self.weights @ self.input + self.bias
         d = self.d_activation(z)
@@ -62,57 +63,6 @@ class Dense:
             self.weights_gradient += self.learning_rate*np.outer(delta_l_1, self.input)
             self.bias_gradient += self.learning_rate*delta_l_1
             return delta_l_1, self.weights
-            
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        """
-        z = self.weights @ self.input + self.bias
-        self.backward_passes += 1
-        if first:
-            delta_l = self.d_activation(z)*loss
-            if delta_l.ndim == 1:
-                product = np.outer(delta_l, self.input)
-            else:
-                product = delta_l @ self.input
-            self.weights_gradient += self.learning_rate*product
-            self.bias_gradient += self.learning_rate*delta_l
-            return delta_l, self.weights
-        if delta_l is None or weights_l is None:
-            raise ValueError(f"Since first is false, delta_l and weights_l must not be None; instead, received delta_l = {delta_l} and weights_l = {weights_l}")
-        delta_l_1 = self.d_activation(z) * (weights_l.T  @ delta_l)
-        tmp_weights = self.weights
-        self.weights_gradient += self.learning_rate*np.outer(delta_l_1, self.input)
-        self.bias_gradient += self.learning_rate*delta_l_1
-        #print(self.weights_gradient)
-        return delta_l_1, tmp_weights
-        """
 
     def update(self):
         print('called')
